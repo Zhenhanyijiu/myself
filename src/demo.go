@@ -20,9 +20,16 @@ func main() {
 	out := strings.TrimPrefix(tst, "  ")
 	fmt.Println(">>", out, len(tst), len(out))
 	n = 16
-	out = strconv.FormatInt(16, 16)
-	fmt.Println("out:", out)
 
+	//goto fail
+	out = strconv.FormatInt(511%256, 16)
+	fmt.Println("out:", out)
+	i, _ := strconv.ParseUint("01", 16, 0)
+	fmt.Println("out_i:", i)
+	goto END
+	//done:
+END:
+	fmt.Println("failed")
 }
 
 //func GetCureve(curveType ...interface{}) string {

@@ -1,0 +1,3 @@
+syntax="proto3";
+package proto;
+//protoc --go_out=plugins=grpctest:. ./faceID.proto

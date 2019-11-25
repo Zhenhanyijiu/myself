@@ -379,7 +379,7 @@ func BenchmarkSlice(b *testing.B) {
 //func TestMarkServer_Paragraph(t *testing.T) {
 //	m := newMarkServer()
 //	markGrpc := "192.168.5.25:1905"
-//	conn, err := grpc.Dial(markGrpc, grpc.WithInsecure())
+//	conn, err := grpctest.Dial(markGrpc, grpctest.WithInsecure())
 //	m.markCli = mark.NewMarkClient(conn)
 //	if err != nil {
 //		fmt.Printf("%s\n", err)
@@ -638,4 +638,60 @@ func TestTrim(t *testing.T) {
 	c1 := []byte{0, 49, 2, 222, 221, 81, 106, 154, 45, 14, 207, 249, 2, 78, 96, 11, 234, 237, 205, 198, 95, 47, 92, 68, 207, 250, 79, 35, 83, 205, 73, 91, 208, 22, 7, 254, 63, 31, 243, 215, 71, 68, 32, 177, 184, 165, 126, 153, 103, 222, 171}
 	out := base64.StdEncoding.EncodeToString(c1)
 	fmt.Printf("%v\n", out)
+}
+
+type person struct {
+	name string
+	age  string
+}
+
+func TestSwitchAssert(t *testing.T) { //断言
+	s := &person{"yyn", "45"}
+	//s = nil
+	//var p person
+	var tp interface{}
+	tp = s
+	//out:=tp.(type)
+	fmt.Printf("tp=%v,s=%v\n", tp != nil, s)
+	switch tp.(type) {
+	case person:
+		fmt.Printf("person...\n")
+	case *person:
+		fmt.Printf("ajjajaj\n")
+		kk, ok := tp.(*person)
+		fmt.Printf("ajjajaj  %v\n", ok)
+		if !ok {
+			fmt.Printf("jjjj\n")
+			return
+		}
+		fmt.Printf("*person...,%s,%s,%v\n", kk.name, kk.age, ok)
+	case nil:
+		fmt.Printf("nil nil...\n")
+
+	}
+
+}
+
+func TestContain(t *testing.T) {
+	in := "hhh[p: jf]"
+	out := strings.Contains(in, "[p:")
+	fmt.Printf("=== %v\n", out)
+	var inn io.Reader
+	inn = os.Stdin
+	out1, err := ioutil.ReadAll(inn)
+	if err != nil {
+		fmt.Printf("error(%v)\n", err)
+	}
+
+	fmt.Printf("=== %v\n", out1)
+}
+
+func (p person) Name(n string) person {
+	p.name = n
+	return p
+}
+func TestUlog(t *testing.T) {
+	p := person{}
+	p = p.Name("lily")
+	fmt.Printf("===%v\n", p.name)
 }

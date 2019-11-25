@@ -1,0 +1,15 @@
+syntax ="proto3";
+package streamtest;
+
+//protoc --go_out=plugins=grpctest:. ./faceID.proto
+service GTest {
+    rpc ExampleDeal(InMsg) returns(stream OutMsg){};
+    rpc ExampleDealStream(stream InMsg) returns(stream OutMsg){};
+}
+
+message InMsg {
+    string name=1;
+}
+message OutMsg{
+    string great=2;
+}

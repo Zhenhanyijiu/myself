@@ -1,7 +1,7 @@
 syntax = "proto3";
 package faceID;
 
-//protoc --go_out=plugins=grpc:. ./test.proto
+//protoc --go_out=plugins=grpctest:. ./streamtest.proto
 service FaceEngine {
     rpc ExtractFeature (ExtReq) returns (ExtRsp) {}
     rpc Compare (CmpReq) returns (CmpRsp) {}

@@ -8,5 +8,9 @@ func print(f *C.char) {
 	fmt.Println("nihao:" + C.GoString(f))
 }
 
+func parseJ() {
+
+}
+
 func main() {
 }

@@ -5,10 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/disintegration/imaging"
-	"github.com/nfnt/resize"
-	"github.com/rwcarlsen/goexif/exif"
 	"image"
-	"image/jpeg"
 	"io/ioutil"
 	"os"
 )
@@ -44,15 +41,17 @@ func main() {
 		return
 	}
 	imgReader := bytes.NewReader(out)
-	img, str, err := image.Decode(imgReader)
+	//img, _, err := image.Decode(imgReader)
+	img, err := imaging.Decode(imgReader, imaging.AutoOrientation(true))
 	if err != nil {
 		fmt.Printf("image decode error:%v\n", err)
 		return
 	}
-	fmt.Printf("image decode :%v\n", str)
+	fmt.Printf("image decode :%v\n")
 	//adjust photo
 
 	//rotation
+	/***************************
 	imgReader.Seek(0, 0)
 	x, err := exif.Decode(imgReader)
 	//loading EXIF sub-IFD: exif: sub-IFD ExifIFDPointer decode failed: zero length tag value
@@ -72,6 +71,7 @@ func main() {
 			}
 		}
 	}
+	*************************/
 	w := img.Bounds().Dx()
 	h := img.Bounds().Dy()
 	fmt.Printf("====width:%v, hight:%v\n", w, h)
@@ -84,16 +84,26 @@ func main() {
 		var imgNew image.Image
 		switch tag {
 		case "w<=h":
-			imgNew = resize.Resize(720, 0, img, resize.Lanczos3)
+			imgNew = imaging.Resize(img, 720, 0, imaging.NearestNeighbor)
 		case "w>h":
-			imgNew = resize.Resize(0, 720, img, resize.Lanczos3)
+			imgNew = imaging.Resize(img, 0, 720, imaging.Box)
 		default:
 			fmt.Printf("========error\n")
 			return
 		}
 		buf := bytes.Buffer{}
-		if err := jpeg.Encode(&buf, imgNew, &jpeg.Options{100}); err != nil {
-			fmt.Printf("jpeg encode :%v\n", err)
+		//if err := jpeg.Encode(&buf, imgNew, &jpeg.Options{100}); err != nil {
+		//	fmt.Printf("jpeg encode :%v\n", err)
+		//	return
+		//}
+		format, err := imaging.FormatFromExtension("jpg")
+		if err != nil {
+			fmt.Printf("FormatFromExtension error :%v\n", err)
+			return
+		}
+		err = imaging.Encode(&buf, imgNew, format)
+		if err != nil {
+			fmt.Printf("imaging.Encode error :%v\n", err)
 			return
 		}
 		fmt.Printf("=======width:%v, hight:%v\n", imgNew.Bounds().Dx(), imgNew.Bounds().Dy())

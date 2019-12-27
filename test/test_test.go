@@ -3,6 +3,7 @@ package test
 import (
 	"encoding/base64"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"testing"
@@ -67,4 +68,24 @@ func TestStringsTrimRight(t *testing.T) {
 	}
 	sort.Strings(kk)
 	fmt.Printf("kk:%v\n", kk)
+
+	//var resize int
+	testSwitch(100)
+	testSwitch(150)
+	testSwitch(151)
+}
+
+func testSwitch(resize int) {
+	switch true {
+	case resize < 150:
+		fmt.Printf("resize<150\n")
+	case resize >= 150:
+		fmt.Printf("resize>=150\n")
+	}
+}
+
+func TestFloor(t *testing.T) {
+	angle := float64(360)
+	angle1 := angle - math.Floor(angle/360)*360
+	fmt.Printf("angle:%v, %v\n", angle1, math.Floor(angle/360)*360)
 }

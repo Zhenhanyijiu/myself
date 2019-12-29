@@ -4,8 +4,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math"
+	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -88,4 +90,44 @@ func TestFloor(t *testing.T) {
 	angle := float64(360)
 	angle1 := angle - math.Floor(angle/360)*360
 	fmt.Printf("angle:%v, %v\n", angle1, math.Floor(angle/360)*360)
+	parallel(0, 5, mm)
+}
+
+func mm(ys <-chan int) {
+	for y := range ys {
+		fmt.Printf("===%v\n", y)
+		//i := y * dst.Stride
+		//src.scan(0, y, src.w, y+1, dst.Pix[i:i+size])
+		for i := 0; i < 3; i++ {
+			fmt.Printf("///%v\n", i)
+		}
+	}
+}
+
+func parallel(start, stop int, f func(<-chan int)) {
+	count := stop - start
+	if count < 1 {
+		return
+	}
+
+	procs := runtime.GOMAXPROCS(0)
+	if procs > count {
+		procs = count
+	}
+
+	c := make(chan int, count)
+	for i := start; i < stop; i++ {
+		c <- i
+	}
+	close(c)
+
+	var wg sync.WaitGroup
+	for i := 0; i < procs; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			f(c)
+		}()
+	}
+	wg.Wait()
 }

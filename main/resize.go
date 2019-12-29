@@ -15,6 +15,8 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"runtime"
+	"sync"
 	"time"
 )
 
@@ -251,4 +253,89 @@ func IamgeToRGBByExif(imgSrc []byte) (rgb []byte, w int, h int, err error) {
 	//rgb = buf.Bytes()
 	fmt.Printf("ImgToRGB, len(rgb):%v,  width:%v,  height:%v\n", len(rgb), bounds.Max.X, bounds.Max.Y)
 	return rgb, bounds.Max.X, bounds.Max.Y, nil
+}
+func RGBToImageGoRoutine(rgb []byte, w int, h int) (img []byte, err error) {
+	begin := time.Now()
+	defer func() {
+		fmt.Printf("RGBToImg End need time(%v ms)\n", time.Since(begin).Nanoseconds()/1e6)
+	}()
+	if len(rgb) == 0 || w < 1 || h < 1 {
+		return nil, errors.New("RGBToImg param error")
+	}
+	rect := image.Rect(0, 0, w, h)
+	rgba := image.NewRGBA(rect)
+	fmt.Printf("RGBToImg: source size(%v bytes)\n", len(rgb))
+	//rd := bytes.NewReader(rgb)
+	//buf := make([]byte, 3)
+	//for y := 0; y < h; y++ {
+	//	for x := 0; x < w; x++ {
+	//		io.ReadFull(rd, buf)
+	//		y1, cb, cr := color.RGBToYCbCr(buf[0], buf[1], buf[2])
+	//		//r, g, b, a := c.RGBA()
+	//		ycbcr := color.YCbCr{
+	//			Y:  y1,
+	//			Cb: cb,
+	//			Cr: cr,
+	//		}
+	//		//col:= color.Color{r, g, b, a}
+	//		rgba.Set(x, y, ycbcr)
+	//	}
+	//}
+	//
+	len1 := 3 * w
+
+	parallel(0, h, func(ints <-chan int) {
+		for y := range ints {
+			len2 := len1 * y
+			//buf := make([]byte, 3)
+			for x := 0; x < w; x++ {
+				//io.ReadFull(rd, buf)
+				st := 3*x + len2
+				buf := rgb[st : st+3]
+				y1, cb, cr := color.RGBToYCbCr(buf[0], buf[1], buf[2])
+				//r, g, b, a := c.RGBA()
+				ycbcr := color.YCbCr{
+					Y:  y1,
+					Cb: cb,
+					Cr: cr,
+				}
+				//col:= color.Color{r, g, b, a}
+				rgba.Set(x, y, ycbcr)
+			}
+		}
+	})
+	buffer := new(bytes.Buffer)
+	if err := jpeg.Encode(buffer, rgba, &jpeg.Options{100}); err != nil {
+		return nil, err
+	}
+	fmt.Printf("RGBToImg: to jpg size(%v bytes)\n", len(buffer.Bytes()))
+	return buffer.Bytes(), nil
+}
+
+func parallel(start, stop int, f func(<-chan int)) {
+	count := stop - start
+	if count < 1 {
+		return
+	}
+
+	procs := runtime.GOMAXPROCS(0)
+	if procs > count {
+		procs = count
+	}
+
+	c := make(chan int, count)
+	for i := start; i < stop; i++ {
+		c <- i
+	}
+	close(c)
+
+	var wg sync.WaitGroup
+	for i := 0; i < procs; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			f(c)
+		}()
+	}
+	wg.Wait()
 }

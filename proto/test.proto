@@ -1,6 +1,7 @@
 syntax = "proto3";
 package faceID;
 
+//protoc --cpp_out=:. cs.proto
 //protoc --go_out=plugins=grpctest:. ./streamtest.proto
 //protoc -I=proto --go_out=plugins=grpc:./grpc *.proto
 //protoc --go_out=plugins=grpc:. ./faceID.proto

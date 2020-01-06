@@ -57,7 +57,10 @@ func main() {
 		fmt.Printf("image decode error:%v\n", err)
 		return
 	}
-	fmt.Printf("image decode :%v\n")
+	//imaging.Encode()
+	//png.Encode()
+	//jpeg.Encode()
+	fmt.Printf("image decode\n")
 	//adjust photo
 
 	//rotation
@@ -94,9 +97,9 @@ func main() {
 		var imgNew image.Image
 		switch tag {
 		case "w<=h":
-			imgNew = imaging.Resize(img, 720, 0, imaging.NearestNeighbor)
+			imgNew = imaging.Resize(img, 720, 0, imaging.Linear)
 		case "w>h":
-			imgNew = imaging.Resize(img, 0, 720, imaging.NearestNeighbor)
+			imgNew = imaging.Resize(img, 0, 720, imaging.Linear)
 		default:
 			fmt.Printf("========error\n")
 			return
@@ -106,6 +109,7 @@ func main() {
 		//	fmt.Printf("jpeg encode :%v\n", err)
 		//	return
 		//}
+		imgNew = imaging.AdjustSaturation(imgNew, 50)
 		format, err := imaging.FormatFromExtension("jpg")
 		if err != nil {
 			fmt.Printf("FormatFromExtension error :%v\n", err)
@@ -116,11 +120,13 @@ func main() {
 			fmt.Printf("imaging.Encode error :%v\n", err)
 			return
 		}
+
 		fmt.Printf("=======width:%v, hight:%v\n", imgNew.Bounds().Dx(), imgNew.Bounds().Dy())
 		n, err := writeFile(*outPath, buf.Bytes())
 		fmt.Printf("writeFile :n(%v),err(%v)\n", n, err)
 		return
 	}
+	//imaging.Rotate()
 	fmt.Printf("=======min(w,h)>=150&&min(w,h)<=720\n")
 }
 func reverseOrientation(img image.Image, o string) *image.NRGBA {
@@ -312,6 +318,64 @@ func RGBToImageGoRoutine(rgb []byte, w int, h int) (img []byte, err error) {
 	return buffer.Bytes(), nil
 }
 
+func RGBToImageGoRoutineTmp(rgb []byte, w int, h int) (img []byte, err error) {
+	begin := time.Now()
+	defer func() {
+		fmt.Printf("RGBToImg End need time(%v ms)\n", time.Since(begin).Nanoseconds()/1e6)
+	}()
+	if len(rgb) == 0 || w < 1 || h < 1 {
+		return nil, errors.New("RGBToImg param error")
+	}
+	rect := image.Rect(0, 0, w, h)
+	rgba := image.NewRGBA(rect)
+	fmt.Printf("RGBToImg: source size(%v bytes)\n", len(rgb))
+	//rd := bytes.NewReader(rgb)
+	//buf := make([]byte, 3)
+	//for y := 0; y < h; y++ {
+	//	for x := 0; x < w; x++ {
+	//		io.ReadFull(rd, buf)
+	//		y1, cb, cr := color.RGBToYCbCr(buf[0], buf[1], buf[2])
+	//		//r, g, b, a := c.RGBA()
+	//		ycbcr := color.YCbCr{
+	//			Y:  y1,
+	//			Cb: cb,
+	//			Cr: cr,
+	//		}
+	//		//col:= color.Color{r, g, b, a}
+	//		rgba.Set(x, y, ycbcr)
+	//	}
+	//}
+	//
+	len1 := 3 * w
+
+	parallel(0, h, func(ints <-chan int) {
+		for y := range ints {
+			len2 := len1 * y
+			//buf := make([]byte, 3)
+			for x := 0; x < w; x++ {
+				//io.ReadFull(rd, buf)
+				st := 3*x + len2
+				buf := rgb[st : st+3]
+				y1, cb, cr := color.RGBToYCbCr(buf[0], buf[1], buf[2])
+				//r, g, b, a := c.RGBA()
+				ycbcr := color.YCbCr{
+					Y:  y1,
+					Cb: cb,
+					Cr: cr,
+				}
+				//col:= color.Color{r, g, b, a}
+				rgba.Set(x, y, ycbcr)
+			}
+		}
+	})
+	buffer := new(bytes.Buffer)
+	if err := jpeg.Encode(buffer, rgba, &jpeg.Options{100}); err != nil {
+		return nil, err
+	}
+	fmt.Printf("RGBToImg: to jpg size(%v bytes)\n", len(buffer.Bytes()))
+	return buffer.Bytes(), nil
+}
+
 func parallel(start, stop int, f func(<-chan int)) {
 	count := stop - start
 	if count < 1 {
@@ -338,4 +402,60 @@ func parallel(start, stop int, f func(<-chan int)) {
 		}()
 	}
 	wg.Wait()
+}
+func ImageResizeAndToRGB(imgSrc []byte, resize int) (rgb []byte, w int, h int, err error) {
+	//begin := time.Now()
+	defer func() {
+		//LOG.Infof("ImgToRGB End need time(%v ms)\n", time.Since(begin).Nanoseconds()/1e6)
+	}()
+	if len(imgSrc) == 0 {
+		return nil, 0, 0, errors.New("ImgToRGB param image is null")
+	}
+	imgsReader := bytes.NewReader(imgSrc)
+	//imaging use AutoOrientation
+	img, err := imaging.Decode(imgsReader, imaging.AutoOrientation(true))
+	if err != nil {
+		return nil, 0, 0, err
+	}
+	//todo:min(w,h)
+	srcW := img.Bounds().Dx()
+	srcH := img.Bounds().Dy()
+	//LOG.Infof("ImgToRGB srcWidth(%v),srcHeight(%v)\n", srcW, srcH)
+	if n, _ := min(srcW, srcH); n < 150 {
+		return nil, 0, 0, errors.New("error:min(w, h)<150")
+	}
+	var m *image.NRGBA
+	switch true {
+	case resize < 150:
+		//not resize
+		m = imaging.Clone(img)
+	default:
+		//resize
+		if n, tag := min(srcW, srcH); n > resize {
+			switch tag {
+			case "w<=h":
+				m = imaging.Resize(img, resize, 0, imaging.Linear)
+			case "w>h":
+				m = imaging.Resize(img, 0, resize, imaging.Linear)
+			default:
+				m = imaging.Clone(img)
+			}
+
+		} else {
+			m = imaging.Clone(img)
+		}
+	}
+	bounds := m.Bounds()
+	//var buf bytes.Buffer
+	pixLen := len(m.Pix)
+	rgb = make([]byte, pixLen*3/4)
+	k := 0
+	for i := 0; i < pixLen; i += 4 {
+		rgb[k] = m.Pix[i]
+		rgb[k+1] = m.Pix[i+1]
+		rgb[k+2] = m.Pix[i+2]
+		k += 3
+	}
+	//LOG.Infof("ImgToRGB newWidth(%v),newHeight(%v),lengthRGB(%v)\n", bounds.Dx(), bounds.Dy(), len(rgb))
+	return rgb, bounds.Dx(), bounds.Dy(), nil
 }

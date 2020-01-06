@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -96,9 +97,10 @@ func main() {
 				fmt.Printf("oken signed string error(%v)\n")
 				return
 			}
-
+			fmt.Printf("==============\n%v\n", string(tokenSting))
 			//verify,
-			// tokData = regexp.MustCompile(`\s*$`).ReplaceAll(tokData, []byte{})
+			tokData := regexp.MustCompile(`\s*$`).ReplaceAll([]byte(tokenSting), []byte{})
+			fmt.Printf("==============regexp\n%v\n", string(tokData))
 			tokenParse, err := jwt.Parse(tokenSting, func(token *jwt.Token) (interface{}, error) {
 				return pub, nil
 			})
@@ -108,6 +110,17 @@ func main() {
 			}
 			out, err := json.Marshal(tokenParse)
 			fmt.Printf("verify: %v\n", string(out))
+
+			/*
+				parts := strings.Split(tokenSting, ".")
+				msg := strings.Join(parts[0:2], ".")
+				err = token.Method.Verify(msg, parts[2], pub)
+				fmt.Printf("=======error(%v)\n", err)
+				if err != nil {
+					fmt.Printf(">>>>>error(%v)\n", err)
+					return
+				}
+			*/
 			//claim:=
 		}
 	case "ec":

@@ -2,10 +2,12 @@ package test
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"math"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -130,4 +132,48 @@ func parallel(start, stop int, f func(<-chan int)) {
 		}()
 	}
 	wg.Wait()
+}
+
+const (
+	aa1 uint32 = 2 * (iota)
+	aa2
+	aa3
+	aa4
+	aa5
+)
+
+func TestIota(t *testing.T) {
+	fmt.Printf("aa1(%v)\naa2(%v)\naa3(%v)\naa4(%v)\naa5(%v)\n", aa1, aa2, aa3, aa4, aa5)
+}
+
+func TestBase64(t *testing.T) {
+	//in := "123/45678909876543211c"
+	//http://wiki.it.yzs.io:8090/display/edu/faceID-v2-doc#faceID-v2-doc
+	//in :=[]byte{}
+	in := make([]byte, 256)
+	for i := 0; i < 256; i++ {
+		in[i] = byte(i)
+	}
+	out := base64.StdEncoding.EncodeToString([]byte(in))
+	fmt.Printf("base64 std:\n%v\n", out)
+
+	out = base64.URLEncoding.EncodeToString([]byte(in))
+	fmt.Printf("base64 Url:\n%v\n", out)
+}
+
+func TestSlice(t *testing.T) {
+	in := []byte{1, 2, 3, 4, 5, 6, 7}
+	in1 := in[3:7:7]
+	fmt.Printf("in1:=%v\n", in1)
+	mp := make(map[int]string) //{"11": "a", "22": "b", "33": "c", "44": "a", "55": "b", "66": "c"}
+	for i := 0; i < 7; i++ {
+		mp[i] = strconv.Itoa(i)
+	}
+	for k, v := range mp {
+		fmt.Printf("k=%v, v=%v\n", k, v)
+	}
+
+	fmt.Printf("%v\n", mp)
+	out, _ := json.Marshal(mp)
+	fmt.Printf("out:%v\n", string(out))
 }

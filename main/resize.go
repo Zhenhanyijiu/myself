@@ -449,13 +449,31 @@ func ImageResizeAndToRGB(imgSrc []byte, resize int) (rgb []byte, w int, h int, e
 	//var buf bytes.Buffer
 	pixLen := len(m.Pix)
 	rgb = make([]byte, pixLen*3/4)
-	k := 0
-	for i := 0; i < pixLen; i += 4 {
-		rgb[k] = m.Pix[i]
-		rgb[k+1] = m.Pix[i+1]
-		rgb[k+2] = m.Pix[i+2]
-		k += 3
-	}
+	//普通方法
+	//k := 0
+	//for i := 0; i < pixLen; i += 4 {
+	//	rgb[k] = m.Pix[i]
+	//	rgb[k+1] = m.Pix[i+1]
+	//	rgb[k+2] = m.Pix[i+2]
+	//	k += 3
+	//}
+	//go routine
+	///////
+	parallel(0, srcH, func(ints <-chan int) {
+		for y := range ints {
+			i := y * srcW * 4
+			k := y * srcW * 3
+			for x := 0; x < srcW; x++ {
+				rgb[k] = m.Pix[i]
+				rgb[k+1] = m.Pix[i+1]
+				rgb[k+2] = m.Pix[i+2]
+				k += 3
+				i += 4
+			}
+		}
+	})
+	//////
+
 	//LOG.Infof("ImgToRGB newWidth(%v),newHeight(%v),lengthRGB(%v)\n", bounds.Dx(), bounds.Dy(), len(rgb))
 	return rgb, bounds.Dx(), bounds.Dy(), nil
 }

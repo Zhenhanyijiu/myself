@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 var bs = `iL7m48mbFSIy1Y5xbXWwPTR07ufxu7o+myGUE+AdDeWWISkd5W6Gl44oX/jgXldS` +
@@ -176,4 +177,11 @@ func TestSlice(t *testing.T) {
 	fmt.Printf("%v\n", mp)
 	out, _ := json.Marshal(mp)
 	fmt.Printf("out:%v\n", string(out))
+	fmt.Printf("second:%v\n", time.Now().Unix())
+	fmt.Printf("ns:%v\n", time.Now().UnixNano())
+	tm := time.Unix(1578461949, 0)
+	fmt.Printf("time:%v, %v \n", tm.String(), time.Now().String())
+	mp1 := make(map[int]string)
+	mp1[0] = "88"
+	fmt.Printf("===%v\n", mp1[1])
 }

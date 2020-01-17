@@ -1,10 +1,16 @@
 package test
 
 import (
+	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/big"
 	"runtime"
 	"sort"
 	"strconv"
@@ -184,4 +190,79 @@ func TestSlice(t *testing.T) {
 	mp1 := make(map[int]string)
 	mp1[0] = "88"
 	fmt.Printf("===%v\n", mp1[1])
+}
+
+type Infomation struct {
+	Name string
+	Age  string
+}
+type Person struct {
+	Info string
+	Num  int
+}
+
+func TestJson(t *testing.T) {
+	info := Infomation{Name: "qq", Age: "13"}
+	out, _ := json.Marshal(&info)
+	p := Person{Info: string(out), Num: 1000}
+	out, _ = json.Marshal(&p)
+	fmt.Printf("===%v\n", len(out))
+	sh := sha256.New()
+	sh.Write(out)
+	st := sh.Sum(nil)
+	In := big.NewInt(0)
+	In = In.SetBytes(st)
+	he := hex.EncodeToString(st)
+	fmt.Printf("====%v,,%v,,%v,,%v,,%v\n", string(out), In.Text(16), len(st), he, len(he))
+	info2 := Infomation{}
+	err := json.Unmarshal([]byte(p.Info), &info2)
+	if err != nil {
+		fmt.Printf("error (%v)\n", err)
+		return
+	}
+	fmt.Printf("====%v\n", info2)
+}
+func padding(src []byte, blocksize int) []byte {
+	padnum := blocksize - len(src)%blocksize
+	pad := bytes.Repeat([]byte{byte(padnum)}, padnum)
+	return append(src, pad...)
+}
+
+func unpadding(src []byte) []byte {
+	n := len(src)
+	unpadnum := int(src[n-1])
+	return src[:n-unpadnum]
+}
+
+func TestCrypt(t *testing.T) {
+	key := []byte{0x93, 0xf4, 0x56, 0x4b, 0x12, 0x2c, 0x95, 0x47,
+		0x5c, 0x44, 0x10, 0x2e, 0xac, 0xb6, 0xb9, 0x13}
+	iv := []byte{0x39, 0xf4, 0x56, 0x4b, 0x12, 0x2c, 0x95, 0x47,
+		0x5c, 0x44, 0x10, 0x2e, 0xac, 0xb6, 0xb9, 0x14}
+	ci, err := aes.NewCipher(key)
+	if err != nil {
+		fmt.Printf("error(%v)\n", err)
+		return
+	}
+	blockSize := ci.BlockSize()
+	src := []byte{0x33, 0xf4, 0x56, 0x4b, 0x12, 0x2c, 0x95, 0x47,
+		0x5c, 0x44, 0x10, 0x2e, 0xac, 0xb6, 0xb9, 0x11}
+	fmt.Printf("blockSize:%v\n", blockSize)
+	src = padding(src, 16)
+	md := cipher.NewCBCEncrypter(ci, iv)
+	dst := make([]byte, len(src))
+	md.CryptBlocks(dst, src)
+	fmt.Printf("cipher:%x, %v\n", dst, len(dst))
+	//dec
+	mdd := cipher.NewCBCDecrypter(ci, iv)
+	mdd.CryptBlocks(dst, dst)
+	dst = unpadding(dst)
+	fmt.Printf("plain :%x, %v\n", dst, len(dst))
+	//cipher.NewCBCEncrypter()
+	/////////////////
+	src1 := src[:16]
+	ci.Encrypt(src1, src1)
+	fmt.Printf("cipher:%x, %v\n", src1, len(src1))
+	ci.Decrypt(src, src)
+	fmt.Printf("plain :%x, %v\n", src1, len(src1))
 }

@@ -199,12 +199,20 @@ type Infomation struct {
 type Person struct {
 	Info string
 	Num  int
+	Time string
+}
+
+type Person1 struct {
+	Info string
+	Num  int
+	Time *time.Time
 }
 
 func TestJson(t *testing.T) {
 	info := Infomation{Name: "qq", Age: "13"}
 	out, _ := json.Marshal(&info)
-	p := Person{Info: string(out), Num: 1000}
+	bout := base64.StdEncoding.EncodeToString(out)
+	p := Person{Info: string(bout), Num: 1000}
 	out, _ = json.Marshal(&p)
 	fmt.Printf("===%v\n", len(out))
 	sh := sha256.New()
@@ -215,12 +223,38 @@ func TestJson(t *testing.T) {
 	he := hex.EncodeToString(st)
 	fmt.Printf("====%v,,%v,,%v,,%v,,%v\n", string(out), In.Text(16), len(st), he, len(he))
 	info2 := Infomation{}
-	err := json.Unmarshal([]byte(p.Info), &info2)
+	bd, _ := base64.StdEncoding.DecodeString(p.Info)
+	err := json.Unmarshal([]byte(bd), &info2)
 	if err != nil {
 		fmt.Printf("error (%v)\n", err)
 		return
 	}
 	fmt.Printf("====%v\n", info2)
+	now := time.Now()
+	nowInt := now.Unix()
+	fmt.Printf("time :%v, %v\n", now.Format("2006-01-02 15:04:05"), nowInt)
+	//s := "2019-12-17 16:43:37"
+	//tT, err := time.Parse("2006-01-02 15:04:05", s)
+	//
+	//fmt.Printf("location:%v\n", time.Now().Location().String())
+	//fmt.Printf("time:%v\n", tT.String())
+
+	t2 := time.Unix(nowInt, 0)
+	fmt.Printf("time2:%v\n", t2.String())
+	////
+	inf1 := `{"Info":"eyJOYW1lIjoicXEiLCJBZ2UiOiIxMyJ9","Num":1000,"Time":"2020-01-19T15:48:05Z"}`
+	p1 := Person1{}
+	json.Unmarshal([]byte(inf1), &p1)
+	fmt.Println(p1)
+	fmt.Printf("##%v,%v\n", p1.Time.Unix(), time.Local.String())
+	t3, err := time.ParseInLocation("2006-01-02 15:04:05", p1.Time.Format("2006-01-02 15:04:05"), time.Local)
+	if err != nil {
+		fmt.Printf("error(%v)\n", err)
+		return
+	}
+	fmt.Printf("##%v, %v\n", t3.String(), t3.Unix())
+	s4 := strings.TrimRight("aaaa####", "#")
+	fmt.Printf("%v\n", s4)
 }
 func padding(src []byte, blocksize int) []byte {
 	padnum := blocksize - len(src)%blocksize
@@ -246,7 +280,7 @@ func TestCrypt(t *testing.T) {
 	}
 	blockSize := ci.BlockSize()
 	src := []byte{0x33, 0xf4, 0x56, 0x4b, 0x12, 0x2c, 0x95, 0x47,
-		0x5c, 0x44, 0x10, 0x2e, 0xac, 0xb6, 0xb9, 0x11}
+		0x5c, 0x44, 0x10, 0x2e, 0xac, 0xb6, 0xb9, 0x11, 0x11}
 	fmt.Printf("blockSize:%v\n", blockSize)
 	src = padding(src, 16)
 	md := cipher.NewCBCEncrypter(ci, iv)
@@ -260,9 +294,55 @@ func TestCrypt(t *testing.T) {
 	fmt.Printf("plain :%x, %v\n", dst, len(dst))
 	//cipher.NewCBCEncrypter()
 	/////////////////
-	src1 := src[:16]
+	src1 := src[:15]
 	ci.Encrypt(src1, src1)
 	fmt.Printf("cipher:%x, %v\n", src1, len(src1))
 	ci.Decrypt(src, src)
 	fmt.Printf("plain :%x, %v\n", src1, len(src1))
+
+}
+
+func enc1(src []byte) string {
+	s1 := base64.URLEncoding.EncodeToString(src)
+	return strings.TrimRight(s1, "=")
+}
+func dec1(src string) ([]byte, error) {
+	remain := len(src) % 4
+	var s strings.Builder
+	s.WriteString(src)
+	if remain > 0 {
+		for i := 0; i < 4-remain; i++ {
+			s.WriteString("=")
+		}
+	}
+	return base64.URLEncoding.DecodeString(s.String())
+}
+
+func TestDec(t *testing.T) {
+	//length := 254
+	for j := 1; j < 600; j++ {
+		src := make([]byte, j)
+		for i := 0; i < j; i++ {
+			src[i] = uint8(i)
+		}
+		out1 := enc1(src)
+		//fmt.Printf("out1:%v\n", out1)
+		out2, err := dec1(out1)
+		if err != nil {
+			return
+		}
+		if bytes.Equal(src, out2) == false {
+			fmt.Printf("!=====\n")
+			return
+		}
+		//fmt.Printf("out2:%v\n", out2)
+	}
+	fmt.Printf("=======\n")
+
+	//en := enc1([]byte("1234567"))
+	//fmt.Printf("en:%v\n", en)
+	en := "eyJ1c2VyIjoicXhmIn0"
+	de, _ := dec1(en)
+	fmt.Printf("de:%v\n", string(de))
+
 }

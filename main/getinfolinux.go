@@ -9,6 +9,7 @@ import (
 	"os/exec"
 )
 
+// dmidecode -t 4 | grep ID
 func main() {
 	v, _ := mem.VirtualMemory()
 

@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"os"
 	"runtime"
 	"sort"
 	"strconv"
@@ -268,6 +269,13 @@ func unpadding(src []byte) []byte {
 	return src[:n-unpadnum]
 }
 
+var (
+	K = []byte{0x93, 0xf4, 0x56, 0x4b, 0x12, 0x2c, 0x95, 0x47,
+		0x5c, 0x44, 0x10, 0x2e, 0xac, 0xb6, 0xb9, 0x13}
+	I = []byte{0x39, 0xf4, 0x56, 0x4b, 0x12, 0x2c, 0x95, 0x47,
+		0x5c, 0x44, 0x10, 0x2e, 0xac, 0xb6, 0xb9, 0x14}
+)
+
 func TestCrypt(t *testing.T) {
 	key := []byte{0x93, 0xf4, 0x56, 0x4b, 0x12, 0x2c, 0x95, 0x47,
 		0x5c, 0x44, 0x10, 0x2e, 0xac, 0xb6, 0xb9, 0x13}
@@ -280,7 +288,7 @@ func TestCrypt(t *testing.T) {
 	}
 	blockSize := ci.BlockSize()
 	src := []byte{0x33, 0xf4, 0x56, 0x4b, 0x12, 0x2c, 0x95, 0x47,
-		0x5c, 0x44, 0x10, 0x2e, 0xac, 0xb6, 0xb9, 0x11, 0x11}
+		0x5c, 0x44, 0x10, 0x2e, 0xac, 0xb6, 0xb9, 0x11, 0x11, 0x11}
 	fmt.Printf("blockSize:%v\n", blockSize)
 	src = padding(src, 16)
 	md := cipher.NewCBCEncrypter(ci, iv)
@@ -294,7 +302,7 @@ func TestCrypt(t *testing.T) {
 	fmt.Printf("plain :%x, %v\n", dst, len(dst))
 	//cipher.NewCBCEncrypter()
 	/////////////////
-	src1 := src[:15]
+	src1 := src[:16]
 	ci.Encrypt(src1, src1)
 	fmt.Printf("cipher:%x, %v\n", src1, len(src1))
 	ci.Decrypt(src, src)
@@ -344,5 +352,95 @@ func TestDec(t *testing.T) {
 	en := "eyJ1c2VyIjoicXhmIn0"
 	de, _ := dec1(en)
 	fmt.Printf("de:%v\n", string(de))
+	now := time.Now()
+	info5 := Person1{
+		Info: en,
+		Num:  66,
+		Time: &now,
+	}
+	out, _ := json.Marshal(info5)
+	fmt.Printf("%v\n", string(out))
 
+}
+
+func enc2(src, k, i []byte) ([]byte, error) {
+	block, err := aes.NewCipher(k)
+	if err != nil {
+		return nil, err
+	}
+	src = padding(src, block.BlockSize())
+	md := cipher.NewCBCEncrypter(block, i)
+	dst := make([]byte, len(src))
+	md.CryptBlocks(dst, src)
+	return dst, nil
+}
+func dec2(src, k, i []byte) ([]byte, error) {
+	block, err := aes.NewCipher(k)
+	if err != nil {
+		return nil, err
+	}
+	md := cipher.NewCBCDecrypter(block, i)
+	dst := make([]byte, len(src))
+	md.CryptBlocks(dst, src)
+	out := unpadding(dst)
+	return out, nil
+}
+
+func enc3(src []byte) {
+
+}
+
+type res struct {
+	Con string
+}
+
+func TestC(t *testing.T) {
+	info := Infomation{
+		Name: "test",
+		Age:  "13",
+	}
+	out, _ := json.Marshal(&info)
+	enc1(out)
+	ps := Person{
+		Info: enc1(out),
+		Num:  33,
+	}
+	out, _ = json.Marshal(&ps)
+	fmt.Printf("%v,%v\n", string(out), len(out))
+	dst1 := enc1(out)
+	fmt.Printf("%v\n", dst1)
+	//src1, err := dec1(dst1)
+	//if err != nil {
+	//	fmt.Printf("%v\n", err)
+	//	return
+	//}
+	//fmt.Printf("%v\n", string(src1))
+	rs := make([]string, 0, 2)
+	rs = append(rs, dst1)
+	dst2, err := enc2([]byte(dst1), K, I)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return
+	}
+	rs = append(rs, enc1(dst2))
+	fmt.Printf("%v,%v\n", enc1(dst2), len(enc1(dst2)))
+	fmt.Printf("%v\n", rs)
+	fcon := strings.Join(rs, ".")
+	fmt.Printf("%v\n", fcon)
+	f, err := os.Create("test.txt")
+	if err != nil {
+		fmt.Printf("error(%v)\n", err)
+		return
+	}
+	defer f.Close()
+	f.WriteString(fcon)
+	dst3, err := dec2(dst2, K, I)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return
+	}
+	f, err = os.Open("test.txt")
+	if bytes.Equal(dst3, []byte(dst1)) {
+		fmt.Printf("is eqeal!\n")
+	}
 }

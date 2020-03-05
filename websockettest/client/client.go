@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"net/http"
 	"time"
 )
 
@@ -15,7 +16,11 @@ func main() {
 	dial := websocket.DefaultDialer
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	c, _, err := dial.DialContext(ctx, wss, nil)
+	//http header
+	var head http.Header
+	head.Set("name", "user")
+	head.Set("age", "37")
+	c, _, err := dial.DialContext(ctx, wss, head)
 	if err != nil {
 		fmt.Printf("DialContext error(%v)\n", err)
 		return

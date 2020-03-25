@@ -32,6 +32,7 @@ import (
 //env GOPATH=/D_QAwYqH3be/yangyanan/pigai/pigai:/D_QAwYqH3be/yangyanan/gopath/ go test -test.bench=BenchmarkHandlePerParagrah -benchmem api_test.go api.go
 //env GOPATH=/D_QAwYqH3be/yangyanan/pigai/pigai:/D_QAwYqH3be/yangyanan/gopath/ go test -test.bench=BenchmarkHandlePerParagrah -benchmem .
 //go build -o libinter.so -buildmode=c-shared inter.go
+//env GO111MODULE=off GOPATH=/D_QAwYqH3be/yangyanan/asr_http/asr_http:/D_QAwYqH3be/yangyanan/gopath/ go test -v -test.run=TestBeforePuncResumeSplitText .
 
 var bys = []byte{11, 23, 21, 34, 12, 23, 21, 34, 12, 23, 21, 34, 12, 23, 21, 77, 12, 23, 21, 34, 12, 23, 21, 34, 12, 23, 21, 34, 12, 23, 21, 34, 12, 23, 21, 34, 12, 23, 21, 34}
 var ft = []float32{33.77, 33.77, 33.77, 33.77, 33.77, 33.77, 33.77, 33.77, 33.77, 33.77}

@@ -75,16 +75,16 @@ func main() {
 	}
 	//head := http.Header{}
 	heads := http.Header{}
-	heads.Set("rate", "16000")
-	heads.Set("appkey", "xuqo7pqagqx5gvdbqyfybrusfosbbkjjtfvsr5qx")
-	heads.Set("closeVad", "true")
-	heads.Set("session-id", "fe945929-dfa4-4960-8e31-f8c057ed2b99")
-	heads.Set("am-speak", "")
-	//heads.Set("domains", "1,11")
-	heads.Set("eof", "eof")
-	heads.Set("vocab-enhance", "5")
-	heads.Set("group-id", "5e58e7ec39de65172c496471")
-	heads.Set("vocab-id", "5e707b7639de65172c496476")
+	//heads.Set("rate", "16000")
+	//heads.Set("appkey", "xuqo7pqagqx5gvdbqyfybrusfosbbkjjtfvsr5qx")
+	//heads.Set("closeVad", "true")
+	//heads.Set("session-id", "fe945929-dfa4-4960-8e31-f8c057ed2b99")
+	//heads.Set("am-speak", "")
+	////heads.Set("domains", "1,11")
+	//heads.Set("eof", "eof")
+	//heads.Set("vocab-enhance", "5")
+	//heads.Set("group-id", "5e58e7ec39de65172c496471")
+	//heads.Set("vocab-id", "5e707b7639de65172c496476")
 	//-H "vocab-enhance:$VocabEnhance" -H "group-id:$gid" -H "vocab-id:$hotid"
 
 	//if *language == "en" {

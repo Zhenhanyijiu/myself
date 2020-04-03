@@ -5,28 +5,99 @@ import (
 	"fmt"
 	"github.com/nsqio/go-nsq"
 	"os"
+	"sync"
 	"time"
 )
 
 func sendMessage() {
-	url := "192.168.4.102:4150"
+	url := "127.0.0.1:4150"
 	producer, err := nsq.NewProducer(url, nsq.NewConfig())
 	if err != nil {
 		panic(err)
 	}
-	err = producer.Publish("test", []byte("hello world"))
+	err = producer.Publish("test1", []byte("hello world##"))
 	if err != nil {
 		panic(err)
 	}
 	producer.Stop()
 }
 func main() {
-	for i := 0; i < 10; i++ {
-		sendMessage()
-	}
-	time.Sleep(time.Second * 10)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	//productor
+	go func() {
+		defer wg.Done()
+		for i := 0; i < 10; i++ {
+			sendMessage()
+		}
+		//time.Sleep(time.Second * 10)
+	}()
+	//consumer
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		url := "127.0.0.1:4150"
+		config := nsq.NewConfig()
+		config.MaxInFlight = 9
+
+		for i := 0; i < 10; i++ {
+			consumer, err := nsq.NewConsumer("test1", "struggle", config)
+			if nil != err {
+				fmt.Println("err", err)
+				return
+			}
+
+			consumer.AddHandler(&NSQHandler{})
+			err = consumer.ConnectToNSQD(url)
+			if nil != err {
+				fmt.Println("err", err)
+				return
+			}
+		}
+		select {}
+	}()
+	wg.Wait()
 }
 
+type NSQHandler struct {
+}
+
+func (this *NSQHandler) HandleMessage(msg *nsq.Message) error {
+	fmt.Println("receive", msg.NSQDAddress, "message:", string(msg.Body))
+	return nil
+}
+
+func testNSQ() {
+	url := "192.168.5.95:4150"
+	waiter := sync.WaitGroup{}
+	waiter.Add(1)
+
+	go func() {
+		defer waiter.Done()
+		config := nsq.NewConfig()
+		config.MaxInFlight = 9
+
+		for i := 0; i < 10; i++ {
+			consumer, err := nsq.NewConsumer("test", "struggle", config)
+			if nil != err {
+				fmt.Println("err", err)
+				return
+			}
+
+			consumer.AddHandler(&NSQHandler{})
+			err = consumer.ConnectToNSQD(url)
+			if nil != err {
+				fmt.Println("err", err)
+				return
+			}
+		}
+		select {}
+	}()
+
+	waiter.Wait()
+}
+
+/////////////////////////////////////////////
 var producer *nsq.Producer
 
 // 主函数

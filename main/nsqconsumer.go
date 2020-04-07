@@ -13,7 +13,7 @@ type ConsumerT struct{}
 // 主函数
 func main() {
 	InitConsumer("test", "test-channel-3", "192.168.6.95:4161")
-	fmt.Printf("========\n")
+	fmt.Printf(">>>========\n")
 	for {
 		time.Sleep(time.Second * 10)
 	}
@@ -21,7 +21,7 @@ func main() {
 
 //处理消息
 func (*ConsumerT) HandleMessage(msg *nsq.Message) error {
-	fmt.Println("receive", msg.NSQDAddress, "message:", string(msg.Body))
+	fmt.Println("===receive", msg.NSQDAddress, "message:", string(msg.Body))
 	return nil
 }
 
@@ -48,7 +48,7 @@ func InitConsumer(topic string, channel string, address string) {
 	//}
 
 	//建立一个nsqd连接
-	if err := c.ConnectToNSQD("192.168.6.95:4150"); err != nil {
-		panic(err)
-	}
+	//if err := c.ConnectToNSQD("192.168.6.95:4150"); err != nil {
+	//	panic(err)
+	//}
 }

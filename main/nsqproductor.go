@@ -15,8 +15,8 @@ type Produ struct {
 
 // 主函数
 func main() {
-	strIP1 := "192.168.6.95:4150"
-	strIP2 := "192.168.6.95:4152"
+	strIP1 := "192.168.5.25:4150"
+	strIP2 := "192.168.5.25:4152"
 	InitProducer(strIP1)
 
 	running := true

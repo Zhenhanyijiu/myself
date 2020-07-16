@@ -90,7 +90,7 @@ func main() {
 	fmt.Printf("n:%v\n", n)
 	fmt.Printf("w.buf(%v)\n", w.buf.String())
 
-	r := strings.NewReader("some io.Reader stream to be read\n")
+	r := strings.NewReader("some io.Reader stream to be read\nahfjahfahhi\n")
 	if _, err := io.Copy(os.Stdout, r); err != nil {
 		log.Fatal(err)
 	}
@@ -99,8 +99,8 @@ func main() {
 	if err != nil {
 		return
 	}
-	for i, v := range fi {
-		fmt.Printf("%v\n", v.Size())
-		fmt.Printf("===index:%v,%v,%v\n", i, v.Name(), v.IsDir())
+	for _, _ = range fi {
+		//fmt.Printf("%v\n", v.Size())
+		//fmt.Printf("===index:%v,%v,%v\n", i, v.Name(), v.IsDir())
 	}
 }

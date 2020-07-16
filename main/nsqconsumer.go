@@ -12,7 +12,7 @@ type ConsumerT struct{}
 
 // 主函数
 func main() {
-	InitConsumer("test", "test-channel-3", "192.168.6.95:4161")
+	InitConsumer("ai-service", "eval", "192.168.5.25:4161")
 	fmt.Printf(">>>========\n")
 	for {
 		time.Sleep(time.Second * 10)
@@ -21,7 +21,7 @@ func main() {
 
 //处理消息
 func (*ConsumerT) HandleMessage(msg *nsq.Message) error {
-	fmt.Println("===receive", msg.NSQDAddress, "message:", string(msg.Body))
+	fmt.Println("===>>>receive", msg.NSQDAddress, "message:", string(msg.Body))
 	return nil
 }
 
